@@ -17,6 +17,7 @@ object task_collections {
    * **/
   def capitalizeIgnoringASCII(text: List[String]): List[String] = {
     List.empty
+    text.head :: text.tail.map((s:String)=>if(isASCIIString(s)) s.toUpperCase else s.toLowerCase )
   }
 
   /**
@@ -29,7 +30,8 @@ object task_collections {
    * HINT: Для всех возможных комбинаций чисел стоит использовать Map
    * **/
   def numbersToNumericString(text: String): String = {
-    ""
+    val digits=Map('1'->"one",'2'->"two",'3'->"three",'4'->"four",'5'->"five",'6'->"six",'7'->"seven",'8'->"eight",'9'->"nine",'0'->"zero")
+    text.flatMap((c:Char)=>digits.getOrElse(c,c.toString))
   }
 
   /**
