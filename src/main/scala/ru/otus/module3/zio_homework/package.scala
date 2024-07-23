@@ -1,6 +1,11 @@
 package ru.otus.module3
 
 import scala.language.postfixOps
+import zio.console.Console
+import zio.random.Random
+import zio.ZIO
+import java.io.IOException
+
 
 package object zio_homework {
   /**
@@ -11,7 +16,16 @@ package object zio_homework {
 
 
 
-  lazy val guessProgram = ???
+  lazy val guessProgram : ZIO[Random with Console, IOException, Unit] = {
+    for {
+      console <- ZIO.environment[Console].map(_.get)
+      random <- ZIO.environment[Random].map(_.get)
+      _ <- console.putStrLn("Input integer from 1 to 3")
+      input <- console.getStrLn
+      rand <- random.nextIntBetween(1, 4)
+      _ <- console.putStrLn("Your input: " + input + ", random input is: " + rand)
+    } yield ()
+  }
 
   /**
    * 2. реализовать функцию doWhile (общего назначения), которая будет выполнять эффект до тех пор, пока его значение в условии не даст true
