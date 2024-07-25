@@ -4,6 +4,7 @@ import scala.language.postfixOps
 import zio.console.Console
 import zio.random.Random
 import zio.ZIO
+import zio.Schedule
 import java.io.IOException
 
 
@@ -23,7 +24,7 @@ package object zio_homework {
       _ <- console.putStrLn("Input integer from 1 to 3")
       input <- console.getStrLn
       rand <- random.nextIntBetween(1, 4)
-      _ <- console.putStrLn("Your input: " + input + ", random input is: " + rand)
+      _ <- console.putStrLn((if (rand.toString == input) "Right" else "Wrong") + " guess. Your input: " + input + ", random  is: " + rand)
     } yield ()
   }
 
@@ -32,7 +33,10 @@ package object zio_homework {
    * 
    */
 
-  def doWhile = ???
+  def doWhile[R,E,A](zio:ZIO[R,E,A])(f:A=>Boolean):ZIO[R,E,A] = {
+
+    zio.flatMap(a=>if (f(a)) doWhile(zio)(f) else ZIO.succeed(a) )
+  }
 
   /**
    * 3. Реализовать метод, который безопасно прочитает конфиг из файла, а в случае ошибки вернет дефолтный конфиг
