@@ -4,8 +4,8 @@ import scala.language.postfixOps
 import zio.console.Console
 import zio.random.Random
 import zio.ZIO
-import zio.Schedule
-import java.io.IOException
+import scala.util.Try
+
 
 
 package object zio_homework {
@@ -15,16 +15,36 @@ package object zio_homework {
    * и печатать в консоль угадал или нет. Подумайте, на какие наиболее простые эффекты ее можно декомпозировать.
    */
 
-
-
-  lazy val guessProgram : ZIO[Random with Console, IOException, Unit] = {
+  lazy val getString:ZIO[Console, Throwable, String] = {
     for {
       console <- ZIO.environment[Console].map(_.get)
+      input<-console.getStrLn
+    } yield (input)
+  }
+
+  def putString(str:String):ZIO[Console, Throwable, Unit] = {
+    for {
+      console <- ZIO.environment[Console].map(_.get)
+      _ <- console.putStrLn(str).orDie
+    } yield ()
+  }
+
+  lazy val getInt:ZIO[Console, Throwable, Int] = {
+    getString.flatMap(str=>ZIO.fromTry(Try(str.toInt)))
+  }
+
+  lazy val readIntOrRetry:ZIO[Console,Throwable,Int] = {
+     getInt.orElse(putString("Некорректный ввод") zipRight readIntOrRetry)
+  }
+
+
+  lazy val guessProgram : ZIO[Random with Console, Throwable, Unit] = {
+    for {
       random <- ZIO.environment[Random].map(_.get)
-      _ <- console.putStrLn("Input integer from 1 to 3")
-      input <- console.getStrLn
       rand <- random.nextIntBetween(1, 4)
-      _ <- console.putStrLn((if (rand.toString == input) "Right" else "Wrong") + " guess. Your input: " + input + ", random  is: " + rand)
+      _ <- putString("Input integer from 1 to 3")
+      input <- readIntOrRetry
+      _ <- putString((if (rand == input) "Right" else "Wrong") + " guess. Your input: " + input + ", random  is: " + rand)
     } yield ()
   }
 
