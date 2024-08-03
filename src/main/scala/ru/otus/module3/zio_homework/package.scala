@@ -1,13 +1,18 @@
 package ru.otus.module3
 
 import scala.language.postfixOps
-import zio.console.Console
+import zio.console.{Console, putStrLn}
 import zio.random.Random
-import zio.ZIO
+import zio.{IO, ZIO, config}
+
 import scala.util.Try
+import ru.otus.module3.zio_homework.config.{AppConfig, load}
 
+import java.io.File
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config.typesafe.TypesafeConfigSource
 
-
+import scala.io.Source
 package object zio_homework {
   /**
    * 1.
@@ -65,7 +70,19 @@ package object zio_homework {
    */
 
 
-  def loadConfigOrDefault = ???
+  def loadConfigOrDefault(fileName:String):ZIO[Console, Throwable, AppConfig] =
+  {
+    TypesafeConfigSource.fromHoconFile(new File(fileName)) match {
+      case Left(_) => { val r=load; putStrLn(r.toString); r }
+      case Right(source) => zio.config.read( descriptor[AppConfig].from(source)) match {
+        case Left(_) => { val r=load; putStrLn(r.toString); r }
+        case Right(s)=>ZIO.succeed(s)
+      }
+    }
+  }
+
+
+
 
 
   /**
