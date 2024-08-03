@@ -4,6 +4,8 @@ import scala.language.postfixOps
 import zio.console.{Console, putStrLn}
 import zio.random.Random
 import zio.{IO, ZIO, config}
+import zio.config.ReadError
+import zio.config.ReadError.SourceError
 
 import scala.util.Try
 import ru.otus.module3.zio_homework.config.{AppConfig, load}
@@ -70,7 +72,7 @@ package object zio_homework {
    */
 
 
-  def loadConfigOrDefault(fileName:String):ZIO[Console, Throwable, AppConfig] =
+  def loadConfigOrDefault(fileName:String):ZIO[Console, ReadError[String], AppConfig] =
   {
     TypesafeConfigSource.fromHoconFile(new File(fileName)) match {
       case Left(_) => { val r=load; putStrLn(r.toString); r }
