@@ -3,9 +3,10 @@ package ru.otus.module3
 import scala.language.postfixOps
 import zio.console.{Console, putStrLn}
 import zio.random.Random
-import zio.{IO, ZIO, config}
+import zio.{IO, ZIO}
 import zio.config.ReadError
-import zio.config.ReadError.SourceError
+import zio.clock.{Clock, sleep}
+import zio.duration.durationInt
 
 import scala.util.Try
 import ru.otus.module3.zio_homework.config.{AppConfig, load}
@@ -13,6 +14,8 @@ import ru.otus.module3.zio_homework.config.{AppConfig, load}
 import java.io.File
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
+import ru.otus.module3.zioConcurrency.printEffectRunningTime
+import zio.test.mock.MockConsole.PutStrLn
 
 import scala.io.Source
 package object zio_homework {
@@ -98,12 +101,19 @@ package object zio_homework {
    * 4.1 Создайте эффект, который будет возвращать случайеым образом выбранное число от 0 до 10 спустя 1 секунду
    * Используйте сервис zio Random
    */
-  lazy val eff = ???
+  lazy val eff:ZIO[Random with Clock with Console,Throwable,Int]= {
+    for {
+      random <- ZIO.environment[Random].map(_.get)
+      clock <- ZIO.environment[Clock].map(_.get)
+      _ <- clock.sleep(1 seconds)
+      rand <- random.nextIntBetween(0, 11)
+    } yield(rand)
+  }
 
   /**
    * 4.2 Создайте коллукцию из 10 выше описанных эффектов (eff)
    */
-  lazy val effects = ???
+  lazy val effects:List[ZIO[Random with Clock with Console,Throwable,Int]] = List.fill(10)(eff)
 
   
   /**
@@ -112,7 +122,14 @@ package object zio_homework {
    * можно использовать ф-цию printEffectRunningTime, которую мы разработали на занятиях
    */
 
-  lazy val app = ???
+  lazy val app:ZIO[Random with Clock with Console,Throwable,Int] = {
+       printEffectRunningTime(ZIO.collectAll(effects).foldM(
+         error => ZIO.fail(error),
+         success => ZIO.effect( {success.sum} ).flatMap(i=>ZIO.succeed(i) zipLeft putString("Sum is "+i.toString))
+         )
+       )
+    }
+
 
 
   /**
