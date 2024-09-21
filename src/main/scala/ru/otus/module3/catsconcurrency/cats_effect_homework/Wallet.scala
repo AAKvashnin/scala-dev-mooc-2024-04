@@ -4,6 +4,10 @@ import cats.effect.Sync
 import cats.implicits._
 import Wallet._
 
+import java.nio.file.Files._
+import java.nio.file.Paths._
+import java.nio.file.StandardOpenOption
+
 // DSL управления электронным кошельком
 trait Wallet[F[_]] {
   // возвращает текущий баланс
@@ -25,9 +29,26 @@ trait Wallet[F[_]] {
 // - java.nio.file.Files.exists
 // - java.nio.file.Paths.get
 final class FileWallet[F[_]: Sync](id: WalletId) extends Wallet[F] {
-  def balance: F[BigDecimal] = ???
-  def topup(amount: BigDecimal): F[Unit] = ???
-  def withdraw(amount: BigDecimal): F[Either[WalletError, Unit]] = ???
+  def balance: F[BigDecimal] = Sync[F].delay({
+    val path = java.nio.file.Paths.get(id)
+    BigDecimal.apply(java.nio.file.Files.readAllLines(path).get(0))
+  })
+  def topup(amount: BigDecimal): F[Unit] = Sync[F].delay({
+    val path = java.nio.file.Paths.get(id)
+    java.nio.file.Files.write(path,
+      amount.toString().getBytes,
+      StandardOpenOption.CREATE,
+      StandardOpenOption.TRUNCATE_EXISTING)
+  }
+  )
+  def withdraw(amount: BigDecimal): F[Either[WalletError, Unit]] = Sync[F].delay({
+    val path = java.nio.file.Paths.get(id)
+    java.nio.file.Files.write(path,
+      amount.toString().getBytes,
+      StandardOpenOption.CREATE,
+      StandardOpenOption.TRUNCATE_EXISTING)
+  }
+  )
 }
 
 object Wallet {
@@ -37,7 +58,14 @@ object Wallet {
   // Здесь нужно использовать обобщенную версию уже пройденного вами метода IO.delay,
   // вызывается она так: Sync[F].delay(...)
   // Тайпкласс Sync из cats-effect описывает возможность заворачивания сайд-эффектов
-  def fileWallet[F[_]: Sync](id: WalletId): F[Wallet[F]] = ???
+  def fileWallet[F[_]: Sync](id: WalletId): F[Wallet[F]] = Sync[F].delay({
+                                         val path = java.nio.file.Paths.get(id)
+                                         if (!java.nio.file.Files.exists(path))
+                                              java.nio.file.Files.write(path,
+                                                                        BigDecimal(0.0).toString().getBytes(),
+                                                                        StandardOpenOption.CREATE,
+                                                                        StandardOpenOption.TRUNCATE_EXISTING)
+                                                                        })
 
   type WalletId = String
 
