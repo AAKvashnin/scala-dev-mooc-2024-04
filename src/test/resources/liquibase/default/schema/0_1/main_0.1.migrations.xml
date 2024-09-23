@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+        <changeSet id="create User table" author="AAKvashnin">
+          <createTable tableName="users">
+              <column name="id" type="text">
+                <constraints primaryKey="true" nullable="false"/>
+              </column>
+              <column name="firstName" type="text">
+                  <constraints nullable="false"/>
+              </column>
+              <column name="lastName" type="text">
+                  <constraints nullable="false"/>
+              </column>
+              <column name="age" type="numeric">
+                  <constraints nullable="false"/>
+              </column>
+          </createTable>
+        </changeSet>
+
+
+        <changeSet id="create UserToRole table" author="AAKvashnin">
+          <createTable tableName="usertorole">
+              <column name="roleId" type="text">
+                <constraints nullable="false"/>
+              </column>
+              <column name="userId" type="text">
+                <constraints nullable="false"/>
+              </column>
+          </createTable>
+        </changeSet>
+    
+        <changeSet id="create Role Table" author="AAKvashnin">
+            <createTable tableName="roles">
+                <column name="code" type="text">
+                    <constraints primaryKey="true" nullable="false"/>
+                </column>
+                <column name="name" type="text">
+                    <constraints nullable="false"/>
+                </column>
+            </createTable>
+        </changeSet>
+         
+        <changeSet id="create UserToRole Primary Key" author="AAKvashnin">
+            <addPrimaryKey tableName="usertorole" columnNames="roleId,userId"/>
+        </changeSet>
+
+
+       <changeSet id="insert manager role" author="AAKvashnin">
+           <insert tableName="roles">
+               <column name="code" value="manager"/>
+               <column name="name" value="Manager"/>
+           </insert>
+       </changeSet>
+
+</databaseChangeLog>
