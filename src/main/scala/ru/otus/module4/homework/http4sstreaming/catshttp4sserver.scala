@@ -7,7 +7,12 @@ import org.http4s.dsl.io._
 import org.http4s.ember.server.EmberServerBuilder
 import com.comcast.ip4s.{Host, Port}
 import cats.effect.kernel.Ref
-import io.circe._, io.circe.generic.semiauto._, io.circe.syntax._
+import io.circe._
+import io.circe.generic.semiauto._
+import io.circe.syntax._
+import org.http4s.server.Router
+import fs2.Stream
+import scala.concurrent.duration._
 
 
 
@@ -18,13 +23,27 @@ object Restfull {
   implicit val fooEncoder: Encoder[CounterJSon] = deriveEncoder[CounterJSon]
 
   type Counter[F[_]] = Ref[F, Int]
-  def service(counter:Counter[IO]): HttpRoutes[IO] = HttpRoutes.of{
+  def serviceCounter(counter:Counter[IO]): HttpRoutes[IO] = HttpRoutes.of{
     case GET -> Root / "counter"  => counter.update(_ + 1).flatMap(_=>counter.get).flatMap(x=>Ok(CounterJSon(x).asJson.toString()))
+  }
 
+  def drip(chunk:Int,total:Int,time:Int):Stream[IO,String] = {
+    Stream.awakeEvery[IO](time*1000.millis).map(_.toString).take(chunk)
   }
 
 
-  def httpApp(counter:Counter[IO]): Http[IO, IO] = service(counter).orNotFound
+  def serviceSlow:HttpRoutes[IO]=HttpRoutes.of{
+    case GET -> Root / "slow" / IntVar(chunk) / IntVar(total)/ IntVar(time) => Ok(drip(chunk, total, time))
+  }
+
+  def router(counter: Counter[IO]) = Router(
+    "/" -> serviceCounter(counter),
+    "/counter"-> serviceCounter(counter),
+    "/slow" -> serviceSlow
+  )
+
+
+  def httpApp(counter:Counter[IO]): Http[IO, IO] = router(counter).orNotFound
 
   val server1 = for {
     counter<- Resource.eval(Ref.of[IO, Int](0))
