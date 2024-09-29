@@ -28,12 +28,12 @@ object Restfull {
   }
 
   def drip(chunk:Int,total:Int,time:Int):Stream[IO,String] = {
-    Stream.awakeEvery[IO](time*1000.millis).map(_.toString).take(chunk)
+    Stream.awakeEvery[IO](time*1000.millis).map(_.toString).take(total/chunk)
   }
 
 
   def serviceSlow:HttpRoutes[IO]=HttpRoutes.of{
-    case GET -> Root / "slow" / IntVar(chunk) / IntVar(total)/ IntVar(time) => Ok(drip(chunk, total, time))
+    case GET -> Root / "slow" / chunk / total / time => Ok(drip(chunk.toInt, total.toInt, time.toInt))
   }
 
   def router(counter: Counter[IO]) = Router(
