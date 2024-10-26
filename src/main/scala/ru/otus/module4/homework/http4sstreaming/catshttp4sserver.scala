@@ -32,14 +32,16 @@ object Restfull {
   }
 
 
-  def serviceSlow:HttpRoutes[IO]=HttpRoutes.of{
-    case GET -> Root / "slow" / chunk / total / time => Ok(drip(chunk.toInt, total.toInt, time.toInt))
+  def serviceSlow():HttpRoutes[IO]=HttpRoutes.of{
+    case GET -> Root /  IntVar(chunk) / IntVar(total) / IntVar(time) => {
+      val stream:Stream[IO,String]=Stream.range(0, total).as(1).chunkN(chunk).evalMapChunk(c=>IO.sleep(time.second)*>IO.pure(c.toArray.toString))
+      Ok(stream)
+    }
   }
 
   def router(counter: Counter[IO]) = Router(
     "/" -> serviceCounter(counter),
-    "/counter"-> serviceCounter(counter),
-    "/slow" -> serviceSlow
+    "/slow" -> serviceSlow()
   )
 
 
