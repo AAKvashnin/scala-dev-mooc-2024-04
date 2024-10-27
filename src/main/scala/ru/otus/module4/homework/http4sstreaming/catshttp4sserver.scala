@@ -30,8 +30,15 @@ object Restfull {
 
   def serviceSlow():HttpRoutes[IO]=HttpRoutes.of{
     case GET -> Root /  IntVar(chunk) / IntVar(total) / IntVar(time) => {
-      val stream:Stream[IO,String]=Stream.range(0, total).map(v=>"A").chunkN(chunk).evalMapChunk(c=>IO.sleep(time.second)*>IO.pure(c.toArray.mkString))
-      Ok(stream)
+      if(chunk<=0 || total<=0 || time<=0)
+        BadRequest()
+      else {
+        val stream: Stream[IO, String] = Stream.range(0, total).map(v => "A").chunkN(chunk).evalMapChunk(c => IO.sleep(time.second) *> IO.pure(c.toArray.mkString))
+        Ok(stream)
+      }
+    }
+    case GET -> Root / chunk / total / time => {
+      BadRequest()
     }
   }
 
