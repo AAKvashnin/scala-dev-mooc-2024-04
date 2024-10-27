@@ -27,10 +27,6 @@ object Restfull {
     case GET -> Root / "counter"  => counter.update(_ + 1).flatMap(_=>counter.get).flatMap(x=>Ok(CounterJSon(x).asJson.toString()))
   }
 
-  def drip(chunk:Int,total:Int,time:Int):Stream[IO,String] = {
-    Stream.awakeEvery[IO](time*1000.millis).map(_.toString).take(total/chunk)
-  }
-
 
   def serviceSlow():HttpRoutes[IO]=HttpRoutes.of{
     case GET -> Root /  IntVar(chunk) / IntVar(total) / IntVar(time) => {
